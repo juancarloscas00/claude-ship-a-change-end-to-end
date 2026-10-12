@@ -34,7 +34,6 @@ router.post("/", (req, res) => {
 
 // PUT /users/:id — replace a user's name and email; 400 if invalid, 404 if missing
 router.put("/:id", (req, res) => {
-  const id = Number(req.params.id);
   const { name, email } = req.body;
 
   if (
@@ -46,7 +45,14 @@ router.put("/:id", (req, res) => {
     return res.status(400).json({ error: "name and email are required" });
   }
 
-  const user = store.updateUser(id, { name, email });
+  // Only plain digit strings are ids; Number() would also accept "0x2" or "2.0"
+  const isValidId = /^\d+$/.test(req.params.id);
+  const user = isValidId
+    ? store.updateUser(Number(req.params.id), {
+        name: name.trim(),
+        email: email.trim(),
+      })
+    : undefined;
 
   if (!user) {
     return res.status(404).json({ error: "User not found" });
